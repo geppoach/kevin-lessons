@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kevin's English Lessons</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f4f0;
+    --bg3: #eeecea;
+    --text: #1a1a1a;
+    --text2: #6b6b6b;
+    --text3: #9a9a9a;
+    --border: rgba(0,0,0,0.1);
+    --border2: rgba(0,0,0,0.18);
+    --blue: #185FA5;
+    --blue-bg: #E6F1FB;
+    --blue-text: #0C447C;
+    --green-bg: #EAF3DE;
+    --green-text: #3B6D11;
+    --amber-bg: #FAEEDA;
+    --amber-text: #854F0B;
+    --red-bg: #FCEBEB;
+    --red-text: #A32D2D;
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1c;
+      --bg2: #252525;
+      --bg3: #2e2e2e;
+      --text: #f0f0f0;
+      --text2: #aaaaaa;
+      --text3: #707070;
+      --border: rgba(255,255,255,0.1);
+      --border2: rgba(255,255,255,0.18);
+      --blue: #378ADD;
+      --blue-bg: #0c2a45;
+      --blue-text: #85B7EB;
+      --green-bg: #1a2e0d;
+      --green-text: #97C459;
+      --amber-bg: #2e1f08;
+      --amber-text: #FAC775;
+      --red-bg: #2e1010;
+      --red-text: #F09595;
+    }
+  }
+  body { font-family: 'Georgia', 'Hiragino Mincho ProN', 'Yu Mincho', serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  .app { max-width: 740px; margin: 0 auto; padding: 2rem 1.2rem 4rem; }
+
+  /* Header */
+  .header { display: flex; align-items: center; gap: 14px; margin-bottom: 1.8rem; }
+  .avatar { width: 52px; height: 52px; border-radius: 50%; background: var(--blue-bg); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 500; color: var(--blue-text); flex-shrink: 0; font-family: sans-serif; }
+  .header h1 { font-size: 22px; font-weight: 500; color: var(--text); letter-spacing: -0.02em; }
+  .header p { font-size: 13px; color: var(--text2); margin-top: 3px; font-family: sans-serif; }
+
+  /* Sync bar */
+  .sync-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: var(--radius); background: var(--bg2); margin-bottom: 1.4rem; font-size: 12px; color: var(--text2); font-family: sans-serif; }
+  .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #5DCAA5; flex-shrink: 0; transition: background 0.3s; }
+  .sync-dot.syncing { background: #FAC775; animation: pulse 1s infinite; }
+  .sync-dot.error { background: #F09595; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .sync-time { margin-left: auto; color: var(--text3); }
+  .refresh-btn { font-size: 12px; padding: 3px 10px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: transparent; color: var(--text2); cursor: pointer; font-family: sans-serif; }
+  .refresh-btn:hover { background: var(--bg3); }
+
+  /* Tabs */
+  .tabs { display: flex; border: 0.5px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 1.6rem; }
+  .tab { flex: 1; padding: 9px 0; font-size: 13px; text-align: center; cursor: pointer; background: var(--bg); color: var(--text2); border: none; font-family: sans-serif; transition: all 0.15s; }
+  .tab.active { background: var(--bg2); color: var(--text); font-weight: 500; }
+  .tab:not(:last-child) { border-right: 0.5px solid var(--border); }
+
+  /* Stats */
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.6rem; }
+  .stat-card { background: var(--bg2); border-radius: var(--radius); padding: 13px 15px; }
+  .stat-card.accent { background: var(--amber-bg); }
+  .stat-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 5px; font-family: sans-serif; }
+  .stat-card.accent .stat-label { color: var(--amber-text); opacity: 0.8; }
+  .stat-value { font-size: 24px; font-weight: 500; color: var(--text); letter-spacing: -0.02em; }
+  .stat-card.accent .stat-value { color: var(--amber-text); }
+  .stat-sub { font-size: 11px; color: var(--text3); margin-top: 3px; font-family: sans-serif; }
+  .stat-card.accent .stat-sub { color: var(--amber-text); opacity: 0.7; }
+
+  /* Month cards */
+  .month-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 10px; overflow: hidden; }
+  .month-header { display: flex; align-items: center; padding: 13px 15px; cursor: pointer; gap: 10px; flex-wrap: wrap; user-select: none; }
+  .month-header:hover { background: var(--bg2); }
+  .month-name { font-size: 14px; font-weight: 500; color: var(--text); flex: 1; min-width: 80px; }
+  .month-mins { font-size: 13px; color: var(--text2); font-family: sans-serif; }
+  .month-amount { font-size: 14px; font-weight: 500; color: var(--text); min-width: 72px; text-align: right; font-family: sans-serif; }
+  .paid-pill { font-size: 11px; padding: 3px 9px; border-radius: 99px; font-weight: 500; white-space: nowrap; font-family: sans-serif; }
+  .paid-yes { background: var(--green-bg); color: var(--green-text); }
+  .paid-no { background: var(--amber-bg); color: var(--amber-text); }
+  .toggle-btn { font-size: 12px; padding: 4px 10px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: transparent; color: var(--text); cursor: pointer; white-space: nowrap; font-family: sans-serif; }
+  .toggle-btn:hover { background: var(--bg3); }
+  .chevron { font-size: 13px; color: var(--text3); transition: transform 0.2s; }
+  .chevron.open { transform: rotate(180deg); }
+
+  /* Session list */
+  .session-list { border-top: 0.5px solid var(--border); display: none; }
+  .session-list.open { display: block; }
+  .session-row { display: flex; align-items: center; padding: 9px 15px; font-size: 13px; gap: 12px; border-bottom: 0.5px solid var(--border); font-family: sans-serif; }
+  .session-row:last-child { border-bottom: none; }
+  .session-date { color: var(--text2); width: 95px; flex-shrink: 0; }
+  .session-mins { color: var(--text); flex: 1; }
+  .session-fee { color: var(--text2); text-align: right; min-width: 65px; }
+  .del-btn { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 13px; padding: 2px 6px; border-radius: 4px; line-height: 1; }
+  .del-btn:hover { background: var(--red-bg); color: var(--red-text); }
+
+  /* Add form */
+  .form-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 18px; margin-bottom: 14px; }
+  .form-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 14px; font-family: sans-serif; }
+  .form-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+  .field { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 120px; }
+  .field label { font-size: 12px; color: var(--text2); font-family: sans-serif; }
+  .field input { padding: 8px 10px; border: 0.5px solid var(--border2); border-radius: var(--radius); font-size: 14px; background: var(--bg); color: var(--text); font-family: sans-serif; outline: none; }
+  .field input:focus { border-color: var(--blue); }
+  .rate-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--bg2); border-radius: var(--radius); font-size: 13px; font-family: sans-serif; margin-bottom: 14px; }
+  .rate-row span { color: var(--text2); flex: 1; }
+  .rate-input { width: 64px; padding: 5px 8px; border: 0.5px solid var(--border2); border-radius: var(--radius); font-size: 13px; text-align: center; background: var(--bg); color: var(--text); font-family: sans-serif; }
+  .submit-btn { padding: 9px 22px; border-radius: var(--radius); border: none; background: var(--blue); color: #fff; font-size: 14px; cursor: pointer; font-weight: 500; flex-shrink: 0; font-family: sans-serif; }
+  .submit-btn:hover { opacity: 0.88; }
+  .submit-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .note { font-size: 12px; color: var(--text3); margin-top: 10px; line-height: 1.6; font-family: sans-serif; }
+
+  .view-all { width: 100%; padding: 10px; text-align: center; font-size: 13px; color: var(--text3); background: none; border: none; cursor: pointer; font-family: sans-serif; }
+  .view-all:hover { color: var(--text2); }
+  .loading { text-align: center; padding: 3rem; color: var(--text3); font-family: sans-serif; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="avatar">K</div>
+    <div>
+      <h1>Kevin's English Lessons</h1>
+      <p>Shared lesson fee tracker — synced in real time</p>
+    </div>
+  </div>
+
+  <div class="sync-bar">
+    <div class="sync-dot" id="sync-dot"></div>
+    <span id="sync-status">Connecting…</span>
+    <button class="refresh-btn" onclick="forceRefresh()">↻ Refresh</button>
+    <span class="sync-time" id="sync-time"></span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('summary')">Overview</button>
+    <button class="tab" onclick="showTab('history')">History</button>
+    <button class="tab" onclick="showTab('add')">Add lesson</button>
+  </div>
+
+  <div id="tab-summary">
+    <div class="stats-grid" id="stats-grid"><div class="loading">Loading…</div></div>
+    <div id="recent-months"></div>
+    <button class="view-all" onclick="showTab('history')">View full history →</button>
+  </div>
+
+  <div id="tab-history" style="display:none;">
+    <div id="all-months"></div>
+  </div>
+
+  <div id="tab-add" style="display:none;">
+    <div class="form-card">
+      <div class="form-title">Unit price</div>
+      <div class="rate-row">
+        <span>Rate (A) — ¥ per minute</span>
+        <input class="rate-input" type="number" id="rate-input" value="12" min="1" onchange="updateRate(this.value)">
+        <span style="flex:none;">¥/min</span>
+      </div>
+      <p class="note">Reference: RareJob ¥200/25min (¥8/min) · Your current rate: ¥12/min</p>
+    </div>
+    <div class="form-card">
+      <div class="form-title">Add a new lesson</div>
+      <div class="form-row">
+        <div class="field"><label>Date</label><input type="date" id="new-date"></div>
+        <div class="field"><label>Duration (min)</label><input type="number" id="new-mins" min="1" max="300" placeholder="30"></div>
+        <button class="submit-btn" id="add-btn" onclick="addLesson()">Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCVL3SpWInIKkpadQr_I73IL960g85RQRs",
+  authDomain: "kevin-lessons.firebaseapp.com",
+  databaseURL: "https://kevin-lessons-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "kevin-lessons",
+  storageBucket: "kevin-lessons.firebasestorage.app",
+  messagingSenderId: "124008998833",
+  appId: "1:124008998833:web:c27ad4624b908eec78ff90"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const dataRef = ref(db, 'lessons');
+
+function toDateStr(serial) {
+  const d = new Date((serial - 25569) * 86400000);
+  return d.toISOString().substring(0, 10);
+}
+
+const initialData = {
+  rate: 12,
+  months: [
+    {ym:'2024-08',paid:true,sessions:[{date:toDateStr(45505),mins:32},{date:toDateStr(45509),mins:36},{date:toDateStr(45510),mins:34},{date:toDateStr(45511),mins:33},{date:toDateStr(45513),mins:30},{date:toDateStr(45515),mins:36},{date:toDateStr(45517),mins:44},{date:toDateStr(45519),mins:31},{date:toDateStr(45522),mins:36},{date:toDateStr(45525),mins:37},{date:toDateStr(45527),mins:30},{date:toDateStr(45531),mins:30},{date:toDateStr(45534),mins:29}]},
+    {ym:'2024-09',paid:true,sessions:[{date:toDateStr(45537),mins:27},{date:toDateStr(45538),mins:29},{date:toDateStr(45543),mins:30},{date:toDateStr(45546),mins:34},{date:toDateStr(45549),mins:34},{date:toDateStr(45551),mins:30},{date:toDateStr(45552),mins:33},{date:toDateStr(45555),mins:31}]},
+    {ym:'2024-10',paid:true,sessions:[{date:toDateStr(45567),mins:39},{date:toDateStr(45571),mins:27},{date:toDateStr(45573),mins:35},{date:toDateStr(45576),mins:29},{date:toDateStr(45578),mins:25},{date:toDateStr(45579),mins:15},{date:toDateStr(45582),mins:26},{date:toDateStr(45584),mins:22},{date:toDateStr(45587),mins:29},{date:toDateStr(45588),mins:24},{date:toDateStr(45591),mins:31},{date:toDateStr(45592),mins:28}]},
+    {ym:'2024-11',paid:true,sessions:[{date:toDateStr(45608),mins:30},{date:toDateStr(45609),mins:30},{date:toDateStr(45610),mins:29},{date:toDateStr(45615),mins:29},{date:toDateStr(45622),mins:25},{date:toDateStr(45624),mins:34}]},
+    {ym:'2024-12',paid:true,sessions:[{date:toDateStr(45629),mins:48},{date:toDateStr(45632),mins:36},{date:toDateStr(45633),mins:36},{date:toDateStr(45637),mins:34},{date:toDateStr(45641),mins:25},{date:toDateStr(45649),mins:30},{date:toDateStr(45652),mins:30},{date:toDateStr(45655),mins:37}]},
+    {ym:'2025-01',paid:true,sessions:[{date:toDateStr(45658),mins:32},{date:toDateStr(45662),mins:27},{date:toDateStr(45664),mins:33},{date:toDateStr(45669),mins:22},{date:toDateStr(45672),mins:36},{date:toDateStr(45677),mins:35},{date:toDateStr(45683),mins:28},{date:toDateStr(45687),mins:27},{date:toDateStr(45688),mins:37}]},
+    {ym:'2025-02',paid:true,sessions:[{date:toDateStr(45691),mins:34},{date:toDateStr(45693),mins:25},{date:toDateStr(45694),mins:26},{date:toDateStr(45697),mins:33},{date:toDateStr(45699),mins:8},{date:toDateStr(45699),mins:30}]},
+    {ym:'2025-03',paid:true,sessions:[{date:toDateStr(45720),mins:35},{date:toDateStr(45723),mins:37},{date:toDateStr(45726),mins:32},{date:toDateStr(45732),mins:32},{date:toDateStr(45735),mins:31},{date:toDateStr(45737),mins:32},{date:toDateStr(45742),mins:36},{date:toDateStr(45745),mins:23},{date:toDateStr(45747),mins:27}]},
+    {ym:'2025-04',paid:true,sessions:[{date:toDateStr(45749),mins:31},{date:toDateStr(45754),mins:37},{date:toDateStr(45758),mins:32},{date:toDateStr(45769),mins:23},{date:toDateStr(45769),mins:24},{date:toDateStr(45771),mins:34},{date:toDateStr(45776),mins:33},{date:toDateStr(45777),mins:33}]},
+    {ym:'2025-05',paid:false,sessions:[{date:toDateStr(45780),mins:32},{date:toDateStr(45784),mins:33},{date:toDateStr(45789),mins:26},{date:toDateStr(45797),mins:35},{date:toDateStr(45803),mins:31},{date:toDateStr(45805),mins:30}]},
+    {ym:'2025-06',paid:false,sessions:[{date:toDateStr(45819),mins:31},{date:toDateStr(45821),mins:34},{date:toDateStr(45823),mins:34},{date:toDateStr(45825),mins:33},{date:toDateStr(45827),mins:42},{date:toDateStr(45828),mins:43},{date:toDateStr(45833),mins:40}]},
+    {ym:'2025-07',paid:false,sessions:[{date:toDateStr(45839),mins:40},{date:toDateStr(45840),mins:39},{date:toDateStr(45843),mins:20},{date:toDateStr(45844),mins:43},{date:toDateStr(45860),mins:60},{date:toDateStr(45862),mins:24},{date:toDateStr(45864),mins:35},{date:toDateStr(45866),mins:24},{date:toDateStr(45868),mins:65}]},
+    {ym:'2025-08',paid:false,sessions:[{date:toDateStr(45872),mins:35},{date:toDateStr(45874),mins:39},{date:toDateStr(45875),mins:37},{date:toDateStr(45878),mins:50},{date:toDateStr(45881),mins:35},{date:toDateStr(45882),mins:34},{date:toDateStr(45885),mins:35},{date:toDateStr(45886),mins:58},{date:toDateStr(45892),mins:40},{date:toDateStr(45894),mins:55},{date:toDateStr(45896),mins:47},{date:toDateStr(45898),mins:37}]},
+    {ym:'2025-09',paid:false,sessions:[{date:toDateStr(45902),mins:45},{date:toDateStr(45905),mins:60},{date:toDateStr(45906),mins:60},{date:toDateStr(45908),mins:55},{date:toDateStr(45910),mins:60},{date:toDateStr(45911),mins:43},{date:toDateStr(45914),mins:39},{date:toDateStr(45915),mins:59},{date:toDateStr(45918),mins:67},{date:toDateStr(45920),mins:46},{date:toDateStr(45921),mins:39},{date:toDateStr(45926),mins:45},{date:toDateStr(45929),mins:54}]},
+    {ym:'2025-10',paid:false,sessions:[{date:toDateStr(45931),mins:30},{date:toDateStr(45938),mins:60},{date:toDateStr(45941),mins:41},{date:toDateStr(45943),mins:36},{date:toDateStr(45944),mins:60},{date:toDateStr(45946),mins:42},{date:toDateStr(45948),mins:38},{date:toDateStr(45954),mins:58},{date:toDateStr(45956),mins:60},{date:toDateStr(45959),mins:65}]},
+    {ym:'2025-11',paid:false,sessions:[{date:toDateStr(45963),mins:40},{date:toDateStr(45965),mins:30},{date:toDateStr(45966),mins:38},{date:toDateStr(45972),mins:40},{date:toDateStr(45974),mins:38},{date:toDateStr(45976),mins:30},{date:toDateStr(45979),mins:50},{date:toDateStr(45981),mins:49},{date:toDateStr(45982),mins:35},{date:toDateStr(45988),mins:25},{date:toDateStr(45990),mins:30}]},
+    {ym:'2025-12',paid:false,sessions:[{date:toDateStr(46000),mins:45},{date:toDateStr(46003),mins:52},{date:toDateStr(46005),mins:33},{date:toDateStr(46007),mins:32},{date:toDateStr(46008),mins:45},{date:toDateStr(46012),mins:42},{date:toDateStr(46014),mins:40}]},
+    {ym:'2026-01',paid:false,sessions:[{date:toDateStr(46027),mins:32},{date:toDateStr(46038),mins:46},{date:toDateStr(46058),mins:28},{date:toDateStr(46066),mins:105},{date:toDateStr(46068),mins:45},{date:toDateStr(46071),mins:43},{date:toDateStr(46073),mins:50},{date:toDateStr(46081),mins:69}]},
+    {ym:'2026-02',paid:false,sessions:[{date:toDateStr(46058),mins:28},{date:toDateStr(46066),mins:105},{date:toDateStr(46068),mins:45},{date:toDateStr(46071),mins:43},{date:toDateStr(46073),mins:50},{date:toDateStr(46081),mins:69}]},
+    {ym:'2026-03',paid:false,sessions:[{date:toDateStr(46088),mins:56},{date:toDateStr(46095),mins:50},{date:toDateStr(46098),mins:33},{date:toDateStr(46103),mins:35},{date:toDateStr(46109),mins:40},{date:toDateStr(46110),mins:32}]},
+    {ym:'2026-04',paid:false,sessions:[{date:toDateStr(46113),mins:43},{date:toDateStr(46124),mins:41},{date:toDateStr(46126),mins:40},{date:toDateStr(46134),mins:40},{date:toDateStr(46138),mins:44}]},
+  ]
+};
+
+let state = { rate: 12, months: [] };
+
+function setSyncUI(status, msg) {
+  const dot = document.getElementById('sync-dot');
+  const label = document.getElementById('sync-status');
+  dot.className = 'sync-dot' + (status === 'syncing' ? ' syncing' : status === 'error' ? ' error' : '');
+  label.textContent = msg;
+}
+function setSyncTime() {
+  document.getElementById('sync-time').textContent = new Date().toLocaleTimeString('ja-JP', {hour:'2-digit',minute:'2-digit'}) + ' updated';
+}
+
+async function saveData() {
+  setSyncUI('syncing', 'Saving…');
+  try {
+    await set(dataRef, state);
+    setSyncUI('ok', 'Synced — shared with Kevin');
+    setSyncTime();
+  } catch(e) {
+    setSyncUI('error', 'Save failed');
+  }
+}
+
+window.forceRefresh = async function() {
+  setSyncUI('syncing', 'Refreshing…');
+  try {
+    const snap = await get(dataRef);
+    if (snap.exists()) { state = snap.val(); render(); }
+    setSyncUI('ok', 'Synced — shared with Kevin');
+    setSyncTime();
+  } catch(e) { setSyncUI('error', 'Refresh failed'); }
+};
+
+window.togglePaid = async function(ym) {
+  const m = state.months.find(x => x.ym === ym);
+  if (m) { m.paid = !m.paid; render(); await saveData(); }
+};
+
+window.deleteSession = async function(ym, idx) {
+  const m = state.months.find(x => x.ym === ym);
+  if (!m) return;
+  m.sessions.splice(idx, 1);
+  if (!m.sessions.length) state.months = state.months.filter(x => x.ym !== ym);
+  render(); await saveData();
+};
+
+window.updateRate = async function(v) {
+  state.rate = parseInt(v) || 12;
+  render(); await saveData();
+};
+
+window.addLesson = async function() {
+  const dateEl = document.getElementById('new-date');
+  const minsEl = document.getElementById('new-mins');
+  const date = dateEl.value;
+  const mins = parseInt(minsEl.value);
+  if (!date || !mins || mins < 1) return;
+  const btn = document.getElementById('add-btn');
+  btn.disabled = true;
+  const ym = date.substring(0, 7);
+  let month = state.months.find(x => x.ym === ym);
+  if (!month) {
+    month = { ym, paid: false, sessions: [] };
+    state.months.push(month);
+    state.months.sort((a,b) => a.ym.localeCompare(b.ym));
+  }
+  month.sessions.push({ date, mins });
+  month.sessions.sort((a,b) => a.date.localeCompare(b.date));
+  dateEl.value = ''; minsEl.value = '';
+  render(); await saveData();
+  btn.disabled = false;
+};
+
+function calcTotal(m) { return m.sessions.reduce((s,x) => s + x.mins * state.rate, 0); }
+function calcMins(m) { return m.sessions.reduce((s,x) => s + x.mins, 0); }
+function fmtYM(ym) { const [y,mo] = ym.split('-'); return `${y}年${parseInt(mo)}月`; }
+
+window.toggleExpand = function(ym) {
+  const el = document.getElementById('sl-'+ym);
+  const ch = document.getElementById('ch-'+ym);
+  if (!el) return;
+  const open = el.classList.contains('open');
+  el.classList.toggle('open', !open);
+  if (ch) ch.className = 'chevron' + (open ? '' : ' open');
+};
+
+function monthCard(m, expanded) {
+  const total = calcTotal(m);
+  const mins = calcMins(m);
+  const rows = m.sessions.map((s,i) => `
+    <div class="session-row">
+      <span class="session-date">${s.date}</span>
+      <span class="session-mins">${s.mins} min</span>
+      <span class="session-fee">¥${(s.mins * state.rate).toLocaleString()}</span>
+      <button class="del-btn" onclick="deleteSession('${m.ym}',${i})" title="Delete">✕</button>
+    </div>`).join('');
+  return `
+    <div class="month-card">
+      <div class="month-header" onclick="toggleExpand('${m.ym}')">
+        <span class="month-name">${fmtYM(m.ym)}</span>
+        <span class="month-mins">${mins} min</span>
+        <span class="month-amount">¥${total.toLocaleString()}</span>
+        <span class="paid-pill ${m.paid ? 'paid-yes' : 'paid-no'}">${m.paid ? 'Paid ✓' : 'Unpaid'}</span>
+        <button class="toggle-btn" onclick="event.stopPropagation();togglePaid('${m.ym}')">${m.paid ? 'Mark unpaid' : 'Mark paid'}</button>
+        <span class="chevron${expanded?' open':''}" id="ch-${m.ym}">▾</span>
+      </div>
+      <div class="session-list${expanded?' open':''}" id="sl-${m.ym}">${rows}</div>
+    </div>`;
+}
+
+function render() {
+  const el = document.getElementById('rate-input');
+  if (el) el.value = state.rate;
+  const sorted = [...state.months].sort((a,b) => b.ym.localeCompare(a.ym));
+  const totalMins = state.months.reduce((s,m) => s + calcMins(m), 0);
+  const totalPaid = state.months.filter(m => m.paid).reduce((s,m) => s + calcTotal(m), 0);
+  const totalUnpaid = state.months.filter(m => !m.paid).reduce((s,m) => s + calcTotal(m), 0);
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Total lessons</div>
+      <div class="stat-value">${state.months.reduce((s,m)=>s+m.sessions.length,0)}</div>
+      <div class="stat-sub">${totalMins.toLocaleString()} min total</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total paid</div>
+      <div class="stat-value">¥${totalPaid.toLocaleString()}</div>
+      <div class="stat-sub">${state.months.filter(m=>m.paid).length} months</div>
+    </div>
+    <div class="stat-card accent">
+      <div class="stat-label">Unpaid balance</div>
+      <div class="stat-value">¥${totalUnpaid.toLocaleString()}</div>
+      <div class="stat-sub">${state.months.filter(m=>!m.paid).length} months pending</div>
+    </div>`;
+  document.getElementById('recent-months').innerHTML = sorted.slice(0,3).map(m => monthCard(m,false)).join('');
+  document.getElementById('all-months').innerHTML = sorted.map((m,i) => monthCard(m, i===0)).join('');
+}
+
+window.showTab = function(tab) {
+  ['summary','history','add'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t===tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach((el,i) => {
+    el.className = 'tab' + (['summary','history','add'][i]===tab ? ' active' : '');
+  });
+};
+
+document.getElementById('new-date').valueAsDate = new Date();
+
+// Listen for real-time updates
+setSyncUI('syncing', 'Connecting…');
+onValue(dataRef, (snap) => {
+  if (snap.exists()) {
+    state = snap.val();
+  } else {
+    state = JSON.parse(JSON.stringify(initialData));
+    set(dataRef, state);
+  }
+  render();
+  setSyncUI('ok', 'Synced — shared with Kevin');
+  setSyncTime();
+}, (err) => {
+  setSyncUI('error', 'Connection failed');
+  state = JSON.parse(JSON.stringify(initialData));
+  render();
+});
+</script>
+</body>
+</html>
