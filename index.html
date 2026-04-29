@@ -27,7 +27,27 @@
   --radius:10px;
   --radius-lg:16px;
 }
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+body.dark{
+  --bg:#0e1a2b;
+  --bg2:#162236;
+  --bg3:#1d2e44;
+  --bg4:#243550;
+  --text:#f0ece3;
+  --text2:#a8b8cc;
+  --text3:#5a7290;
+  --border:rgba(255,255,255,0.08);
+  --border2:rgba(255,255,255,0.15);
+  --gold:#c9a84c;
+  --gold2:#e8c97a;
+  --green-bg:rgba(90,200,130,0.15);
+  --green-text:#5ac882;
+  --amber-bg:rgba(230,160,60,0.15);
+  --amber-text:#e6a03c;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background 0.3s,color 0.3s;}
+.theme-btn{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.75);backdrop-filter:blur(4px);z-index:10;transition:background 0.2s;}
+body.dark .theme-btn{background:rgba(0,0,0,0.35);}
+.hero-wrap{position:relative;}
 
 .hero{width:100%;overflow:hidden;display:block;line-height:0;}
 .hero svg{display:block;width:100%;height:auto;}
@@ -112,6 +132,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 </head>
 <body>
 
+<div class="hero-wrap">
+<button class="theme-btn" onclick="toggleTheme()" id="theme-btn" title="テーマ切替">🌙</button>
 <div class="hero">
 <svg width="100%" viewBox="0 0 380 280" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -277,6 +299,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <text x="190" y="38" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#B45309">Japan x Philippines</text>
   </g>
 </svg>
+</div>
 </div>
 
 <div class="sync-bar">
@@ -446,15 +469,10 @@ function render(){
   const totalPaid=state.months.filter(m=>m.paid).reduce((s,m)=>s+calcTotal(m),0);
   const totalUnpaid=state.months.filter(m=>!m.paid).reduce((s,m)=>s+calcTotal(m),0);
   document.getElementById('stats-grid').innerHTML=`
-    <div class="stat-card gold-accent">
+    <div class="stat-card gold-accent stat-wide">
       <div class="stat-label">Total lessons</div>
       <div class="stat-value">${state.months.reduce((s,m)=>s+m.sessions.length,0)}</div>
       <div class="stat-sub">${totalMins.toLocaleString()} min · ${state.months.length} months</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Total paid</div>
-      <div class="stat-value">¥${totalPaid.toLocaleString()}</div>
-      <div class="stat-sub">${state.months.filter(m=>m.paid).length} months cleared</div>
     </div>
     <div class="stat-card warn stat-wide">
       <div class="stat-label">Unpaid balance</div>
@@ -469,6 +487,15 @@ window.showTab=function(tab){
   ['summary','history','add'].forEach(t=>{document.getElementById('tab-'+t).style.display=t===tab?'block':'none';});
   document.querySelectorAll('.tab').forEach((el,i)=>{el.className='tab'+(['summary','history','add'][i]===tab?' active':'');});
 };
+
+window.toggleTheme=function(){
+  const dark=document.body.classList.toggle('dark');
+  document.getElementById('theme-btn').textContent=dark?'☀️':'🌙';
+  try{localStorage.setItem('kl-theme',dark?'dark':'light');}catch(e){}
+};
+(function(){
+  try{if(localStorage.getItem('kl-theme')==='dark'){document.body.classList.add('dark');const b=document.getElementById('theme-btn');if(b)b.textContent='☀️';}}catch(e){}
+})();
 
 document.getElementById('new-date').valueAsDate=new Date();
 setSyncUI('syncing','Connecting…');
