@@ -128,6 +128,9 @@ body.dark .theme-btn{background:rgba(0,0,0,0.35);}
 .view-all{width:100%;padding:12px;text-align:center;font-size:13px;color:var(--text3);background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .view-all:active{color:var(--text2);}
 .loading{text-align:center;padding:3rem 1rem;color:var(--text3);font-size:14px;}
+.pdf-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:9px;border-radius:var(--radius);border:1px solid rgba(180,100,0,0.25);background:transparent;color:var(--gold);font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:1px;}
+.pdf-btn:active{opacity:0.7;}
+body.dark .pdf-btn{border-color:rgba(201,168,76,0.3);}
 </style>
 </head>
 <body>
@@ -458,6 +461,7 @@ function monthCard(m,expanded){
     <div class="session-list${expanded?' open':''}" id="sl-${m.ym}">${rows}</div>
     <div class="paid-action">
       <button class="mark-paid-btn${m.paid?' is-paid':''}" onclick="togglePaid('${m.ym}')">${m.paid?'Mark as unpaid':'Mark as paid'}</button>
+      <button class="pdf-btn" onclick="exportPDF('${m.ym}')">📄 PDF明細を出力</button>
     </div>
   </div>`;
 }
@@ -488,7 +492,113 @@ window.showTab=function(tab){
   document.querySelectorAll('.tab').forEach((el,i)=>{el.className='tab'+(['summary','history','add'][i]===tab?' active':'');});
 };
 
-window.toggleTheme=function(){
+window.exportPDF=function(ym){
+  const m=state.months.find(x=>x.ym===ym);
+  if(!m)return;
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const total=calcTotal(m);
+  const totalMins=calcMins(m);
+  const [y,mo]=ym.split('-');
+  const title=`${y}年${parseInt(mo)}月 レッスン明細`;
+
+  // Header bar
+  doc.setFillColor(184,125,42);
+  doc.rect(0,0,210,22,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(16);
+  doc.text("Kevin's English Lessons", 14, 14);
+
+  // Sub header
+  doc.setFillColor(245,240,232);
+  doc.rect(0,22,210,12,'F');
+  doc.setTextColor(107,90,69);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(10);
+  doc.text('Japan x Philippines  ·  Lesson Fee Statement', 14, 30);
+  doc.text(`Rate: ¥${state.rate}/min`, 160, 30);
+
+  // Title
+  doc.setTextColor(44,32,24);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(18);
+  doc.text(title, 14, 50);
+
+  // Status pill
+  const pillColor=m.paid?[46,125,79]:[184,90,0];
+  doc.setFillColor(...pillColor);
+  doc.roundedRect(14,54,m.paid?18:22,7,2,2,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(8);
+  doc.text(m.paid?'Paid':'Unpaid', 16, 59);
+
+  // Summary box
+  doc.setFillColor(253,250,245);
+  doc.setDrawColor(220,190,140);
+  doc.roundedRect(14,66,182,22,3,3,'FD');
+  doc.setTextColor(107,90,69);
+  doc.setFontSize(9);
+  doc.setFont('helvetica','normal');
+  doc.text('Total sessions', 20, 74);
+  doc.text('Total minutes', 80, 74);
+  doc.text('Total amount', 148, 74);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(13);
+  doc.setTextColor(44,32,24);
+  doc.text(`${m.sessions.length}`, 20, 83);
+  doc.text(`${totalMins} min`, 80, 83);
+  doc.setTextColor(184,125,42);
+  doc.text(`¥${total.toLocaleString()}`, 148, 83);
+
+  // Table header
+  const tableTop=96;
+  doc.setFillColor(184,125,42);
+  doc.rect(14,tableTop,182,8,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(9);
+  doc.text('Date', 18, tableTop+5.5);
+  doc.text('Duration', 90, tableTop+5.5);
+  doc.text('Fee', 165, tableTop+5.5);
+
+  // Table rows
+  let rowY=tableTop+8;
+  m.sessions.forEach((s,i)=>{
+    if(i%2===0){doc.setFillColor(253,250,245);doc.rect(14,rowY,182,8,'F');}
+    else{doc.setFillColor(248,243,235);doc.rect(14,rowY,182,8,'F');}
+    doc.setTextColor(44,32,24);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.text(s.date, 18, rowY+5.5);
+    doc.text(`${s.mins} min`, 90, rowY+5.5);
+    doc.setFont('helvetica','bold');
+    doc.text(`¥${(s.mins*state.rate).toLocaleString()}`, 165, rowY+5.5);
+    rowY+=8;
+  });
+
+  // Total row
+  doc.setFillColor(44,32,24);
+  doc.rect(14,rowY,182,9,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(10);
+  doc.text('Total', 18, rowY+6);
+  doc.text(`${totalMins} min`, 90, rowY+6);
+  doc.setTextColor(255,220,100);
+  doc.text(`¥${total.toLocaleString()}`, 165, rowY+6);
+
+  // Footer
+  doc.setFillColor(184,125,42);
+  doc.rect(0,285,210,12,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(8);
+  doc.text(`Generated on ${new Date().toLocaleDateString('ja-JP')}  ·  Kevin's English Lessons`, 14, 292);
+
+  doc.save(`kevin-lessons-${ym}.pdf`);
+};
+
   const dark=document.body.classList.toggle('dark');
   document.getElementById('theme-btn').textContent=dark?'☀️':'🌙';
   try{localStorage.setItem('kl-theme',dark?'dark':'light');}catch(e){}
@@ -505,5 +615,6 @@ onValue(dataRef,(snap)=>{
   render();setSyncUI('ok','Synced — shared with Kevin');setSyncTime();
 },(err)=>{setSyncUI('error','Connection failed');state=JSON.parse(JSON.stringify(initialData));render();});
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </body>
 </html>
