@@ -427,6 +427,7 @@ window.addLesson=async function(){
 };
 
 function calcTotal(m){return m.sessions.reduce((s,x)=>s+x.mins*state.rate,0);}
+function calcRounded(m){return Math.ceil(calcTotal(m)/100)*100;}
 function calcMins(m){return m.sessions.reduce((s,x)=>s+x.mins,0);}
 function fmtYM(ym){const[y,mo]=ym.split('-');return`${y}年${parseInt(mo)}月`;}
 
@@ -439,7 +440,7 @@ window.toggleExpand=function(ym){
 };
 
 function monthCard(m,expanded){
-  const total=calcTotal(m),mins=calcMins(m);
+  const total=calcRounded(m),mins=calcMins(m);
   const rows=m.sessions.map((s,i)=>`
     <div class="session-row">
       <span class="session-date">${s.date}</span>
@@ -471,8 +472,7 @@ function render(){
   const el=document.getElementById('rate-input');if(el)el.value=state.rate;
   const sorted=[...state.months].sort((a,b)=>b.ym.localeCompare(a.ym));
   const totalMins=state.months.reduce((s,m)=>s+calcMins(m),0);
-  const totalPaid=state.months.filter(m=>m.paid).reduce((s,m)=>s+calcTotal(m),0);
-  const totalUnpaid=state.months.filter(m=>!m.paid).reduce((s,m)=>s+calcTotal(m),0);
+  const totalUnpaid=state.months.filter(m=>!m.paid).reduce((s,m)=>s+calcRounded(m),0);
   document.getElementById('stats-grid').innerHTML=`
     <div class="stat-card gold-accent stat-wide">
       <div class="stat-label">Total lessons</div>
@@ -498,10 +498,12 @@ window.exportPDF=function(ym){
   if(!m)return;
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  const total=calcTotal(m);
+  const rawTotal=calcTotal(m);
+  const total=Math.ceil(rawTotal/100)*100; // 100円単位で繰り上げ
   const totalMins=calcMins(m);
   const [y,mo]=ym.split('-');
-  const title=`${y}年${parseInt(mo)}月 レッスン明細`;
+  const monthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const title=`${monthNames[parseInt(mo)-1]} ${y} — Lesson Statement`;
 
   // Header bar
   doc.setFillColor(184,125,42);
@@ -518,7 +520,7 @@ window.exportPDF=function(ym){
   doc.setFont('helvetica','normal');
   doc.setFontSize(10);
   doc.text('Japan x Philippines  ·  Lesson Fee Statement', 14, 30);
-  doc.text(`Rate: ¥${state.rate}/min`, 160, 30);
+  doc.text(`Rate: Y${state.rate}/min`, 160, 30);
 
   // Title
   doc.setTextColor(44,32,24);
@@ -543,14 +545,22 @@ window.exportPDF=function(ym){
   doc.setFont('helvetica','normal');
   doc.text('Total sessions', 20, 74);
   doc.text('Total minutes', 80, 74);
-  doc.text('Total amount', 148, 74);
+  doc.text('Amount due', 148, 74);
   doc.setFont('helvetica','bold');
   doc.setFontSize(13);
   doc.setTextColor(44,32,24);
   doc.text(`${m.sessions.length}`, 20, 83);
   doc.text(`${totalMins} min`, 80, 83);
   doc.setTextColor(184,125,42);
-  doc.text(`¥${total.toLocaleString()}`, 148, 83);
+  doc.text(`Y${total.toLocaleString()}`, 148, 83);
+
+  // Rounding note
+  if(rawTotal!==total){
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(150,120,80);
+    doc.text(`(Subtotal: Y${rawTotal.toLocaleString()} — rounded up to nearest Y100)`, 148, 89);
+  }
 
   // Table header
   const tableTop=96;
@@ -574,9 +584,30 @@ window.exportPDF=function(ym){
     doc.text(s.date, 18, rowY+5.5);
     doc.text(`${s.mins} min`, 90, rowY+5.5);
     doc.setFont('helvetica','bold');
-    doc.text(`¥${(s.mins*state.rate).toLocaleString()}`, 165, rowY+5.5);
+    doc.text(`Y${(s.mins*state.rate).toLocaleString()}`, 165, rowY+5.5);
     rowY+=8;
   });
+
+  // Subtotal row (if rounding applies)
+  if(rawTotal!==total){
+    doc.setFillColor(240,235,225);
+    doc.rect(14,rowY,182,8,'F');
+    doc.setTextColor(107,90,69);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.text('Subtotal', 18, rowY+5.5);
+    doc.text(`${totalMins} min`, 90, rowY+5.5);
+    doc.text(`Y${rawTotal.toLocaleString()}`, 165, rowY+5.5);
+    rowY+=8;
+    doc.setFillColor(230,220,200);
+    doc.rect(14,rowY,182,8,'F');
+    doc.setTextColor(107,90,69);
+    doc.setFont('helvetica','italic');
+    doc.setFontSize(8.5);
+    doc.text('Rounded up to nearest Y100', 18, rowY+5.5);
+    doc.text(`+ Y${(total-rawTotal).toLocaleString()}`, 165, rowY+5.5);
+    rowY+=8;
+  }
 
   // Total row
   doc.setFillColor(44,32,24);
@@ -584,10 +615,10 @@ window.exportPDF=function(ym){
   doc.setTextColor(255,255,255);
   doc.setFont('helvetica','bold');
   doc.setFontSize(10);
-  doc.text('Total', 18, rowY+6);
+  doc.text('Amount Due', 18, rowY+6);
   doc.text(`${totalMins} min`, 90, rowY+6);
   doc.setTextColor(255,220,100);
-  doc.text(`¥${total.toLocaleString()}`, 165, rowY+6);
+  doc.text(`Y${total.toLocaleString()}`, 165, rowY+6);
 
   // Footer
   doc.setFillColor(184,125,42);
@@ -595,7 +626,9 @@ window.exportPDF=function(ym){
   doc.setTextColor(255,255,255);
   doc.setFont('helvetica','normal');
   doc.setFontSize(8);
-  doc.text(`Generated on ${new Date().toLocaleDateString('ja-JP')}  ·  Kevin's English Lessons`, 14, 292);
+  const today=new Date();
+  const dateStr=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  doc.text(`Generated on ${dateStr}  ·  Kevin's English Lessons  ·  Japan x Philippines`, 14, 292);
 
   doc.save(`kevin-lessons-${ym}.pdf`);
 };
