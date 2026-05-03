@@ -347,6 +347,7 @@ body.dark .pdf-btn{border-color:rgba(201,168,76,0.3);}
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
@@ -599,6 +600,7 @@ window.exportPDF=function(ym){
   doc.save(`kevin-lessons-${ym}.pdf`);
 };
 
+window.toggleTheme=function(){
   const dark=document.body.classList.toggle('dark');
   document.getElementById('theme-btn').textContent=dark?'☀️':'🌙';
   try{localStorage.setItem('kl-theme',dark?'dark':'light');}catch(e){}
@@ -615,6 +617,5 @@ onValue(dataRef,(snap)=>{
   render();setSyncUI('ok','Synced — shared with Kevin');setSyncTime();
 },(err)=>{setSyncUI('error','Connection failed');state=JSON.parse(JSON.stringify(initialData));render();});
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </body>
 </html>
